@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="JixHunter" />
+  <meta name="theme-color" content="#061021" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <link rel="icon" href="logo.png" />
+  <title>JixHunter</title>
+
+  <style>
+    :root{
+      --bg:#050a14;
+      --line:rgba(80,180,255,.24);
+      --line2:rgba(80,180,255,.12);
+      --text:#d9f2ff;
+      --muted:#86b8d6;
+      --accent:#52d6ff;
+
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --glow: 0 0 0 1px rgba(82,214,255,.35), 0 0 24px rgba(82,214,255,.18);
+      --glowStrong: 0 0 0 1px rgba(82,214,255,.65), 0 0 34px rgba(82,214,255,.35);
+      --radius: 18px;
+
+      --nodeMinW: 140px;
+      --nodePadX: 12px;
+      --nodePadY: 9px;
+      --nodeFont: 13px;
+
+      --safeTop: env(safe-area-inset-top);
+      --safeBot: env(safe-area-inset-bottom);
+      --safeLeft: env(safe-area-inset-left);
+      --safeRight: env(safe-area-inset-right);
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial, sans-serif;}
+    button, input{ font:inherit; color:inherit; }
+    button{ -webkit-appearance:none; appearance:none; }
+
+    .bg{
+      position:fixed; inset:0;
+      background:
+        radial-gradient(1200px 800px at 20% 15%, rgba(82,214,255,.16), transparent 55%),
+        radial-gradient(900px 700px at 85% 25%, rgba(107,124,255,.14), transparent 55%),
+        url("menu.png") center/cover no-repeat;
+      filter: saturate(1.05) contrast(1.05);
+      transform: scale(1.02);
+      z-index:-3;
+    }
+    .frost{
+      position:fixed; inset:0;
+      background: rgba(5,10,20,.55);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index:-2;
+    }
+    .grid{
+      position:fixed; inset:0;
+      background-image:
+        linear-gradient(to right, rgba(80,180,255,.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(80,180,255,.06) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity:.7;
+      z-index:-1;
+      mask-image: radial-gradient(circle at 45% 30%, rgba(0,0,0,1) 0%, rgba(0,0,0,.92) 40%, rgba(0,0,0,.70) 70%, rgba(0,0,0,.35) 100%);
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: calc(10px + var(--safeTop)) calc(10px + var(--safeRight)) calc(10px + var(--safeBot)) calc(10px + var(--safeLeft));
+      gap:10px;
+    }
+
+    .hud{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(9,19,45,.78), rgba(6,14,33,.72));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    .brand{ display:flex; align-items:center; gap:10px; min-width:190px; }
+    .brand img{
+      width:34px; height:34px;
+      border-radius:10px;
+      border:1px solid rgba(82,214,255,.35);
+      box-shadow: 0 0 18px rgba(82,214,255,.18);
+      background: rgba(0,0,0,.2);
+    }
+    .brand .title{ display:flex; flex-direction:column; line-height:1.05; }
+    .brand .title b{ font-size:14px; letter-spacing:.4px;}
+    .brand .title span{ font-size:11px; color:var(--muted); }
+
+    .tabs{
+      display:flex; gap:8px; margin-left:auto;
+      background: rgba(0,0,0,.16);
+      border:1px solid var(--line2);
+      padding:6px;
+      border-radius: 999px;
+    }
+    .tab{
+      border:0; background: transparent;
+      padding:8px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      display:flex; align-items:center; gap:8px;
+      cursor:pointer; user-select:none;
+    }
+    .tab.active{
+      color: var(--text);
+      background: rgba(82,214,255,.12);
+      box-shadow: var(--glow);
+    }
+    .tab .emoji{ font-size:15px; }
+
+    .hudActions{ display:flex; gap:8px; margin-left:8px; }
+
+    .iconBtn{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      border-radius: 14px;
+      padding:10px 12px;
+      cursor:pointer; user-select:none;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.1);
+      display:flex; align-items:center; gap:8px;
+    }
+    .iconBtn:active{ transform: translateY(1px); }
+    .iconBtn.on{ background: rgba(82,214,255,.14); box-shadow: var(--glowStrong); }
+    .hint{ font-size:11px; color: var(--muted); }
+
+    .panel{ flex:1; display:flex; min-height:0; gap:10px; }
+
+    .treeWrap{
+      flex:1; position:relative;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(6,14,33,.42);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+
+    .floatControls{
+      position:absolute; right:10px; bottom:10px;
+      display:flex; gap:8px; z-index:80;
+    }
+    .miniBtn{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.28);
+      padding:10px 12px;
+      border-radius: 14px;
+      cursor:pointer; user-select:none;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.1);
+    }
+    .miniBtn:active{ transform: translateY(1px); }
+
+    .viewport{ position:absolute; inset:0; touch-action:none; }
+    .world{
+      position:absolute; left:0; top:0;
+      width: 6000px; height: 4000px;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    svg.edges{
+      position:absolute; left:0; top:0;
+      width: 6000px; height: 4000px;
+      overflow: visible;
+      pointer-events:none;
+    }
+    .edge{
+      stroke: rgba(82,214,255,.55);
+      stroke-width: 2;
+      fill: none;
+      filter: drop-shadow(0 0 6px rgba(82,214,255,.18));
+    }
+    .edgeTemp{
+      stroke: rgba(82,214,255,.92);
+      stroke-width: 2.6;
+      fill:none;
+      stroke-dasharray: 7 7;
+      filter: drop-shadow(0 0 12px rgba(82,214,255,.40));
+      opacity:.98;
+    }
+
+    .node{
+      position:absolute;
+      min-width: var(--nodeMinW);
+      max-width: 240px;
+      padding: var(--nodePadY) var(--nodePadX);
+      border-radius: 14px;
+      border:1px solid rgba(80,180,255,.32);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+      cursor: grab;
+      user-select:none;
+      touch-action:none;
+    }
+    .node:hover{ box-shadow: var(--shadow), var(--glow); border-color: rgba(82,214,255,.55); }
+    .node.selected{
+      box-shadow: var(--shadow), var(--glowStrong);
+      border-color: rgba(82,214,255,.85);
+      background: rgba(82,214,255,.10);
+    }
+    .node.dragging{ cursor: grabbing; }
+    .node.linkHover{
+      box-shadow: var(--shadow), var(--glowStrong);
+      border-color: rgba(82,214,255,.95);
+    }
+
+    .nodeHeader{ display:flex; align-items:flex-start; gap:8px; position:relative; }
+    .colorDot{
+      width:12px; height:12px;
+      border-radius:999px;
+      background: var(--accent);
+      margin-top:3px;
+      box-shadow: 0 0 10px rgba(82,214,255,.22);
+      flex:0 0 auto;
+      border:1px solid rgba(255,255,255,.15);
+      pointer-events:none;
+    }
+    .nodeTitle{
+      font-size: var(--nodeFont);
+      line-height:1.2;
+      color: var(--text);
+      word-break: break-word;
+      white-space: normal;
+      flex:1;
+      text-align:center;
+      pointer-events:none;
+      min-height: 16px;
+    }
+
+    .nodeTitleEdit{
+      flex:1;
+      border:1px solid rgba(80,180,255,.20);
+      background: rgba(0,0,0,.22);
+      border-radius: 12px;
+      padding:8px 10px;
+      outline:none;
+      color: var(--text);
+      font-size: var(--nodeFont);
+      text-align:center;
+      min-width: 80px;
+    }
+
+    .nodeIcons{
+      display:flex; gap:6px;
+      flex:0 0 auto;
+      margin-left:6px;
+    }
+    .nodeIconBtn{
+      width:24px; height:24px;
+      display:grid; place-items:center;
+      border-radius:10px;
+      border:1px solid rgba(80,180,255,.22);
+      background: rgba(0,0,0,.18);
+      cursor:pointer;
+      padding:0;
+    }
+    .nodeIconBtn:active{ transform: translateY(1px); }
+    .nodeIconBtn.on{
+      background: rgba(82,214,255,.14);
+      border-color: rgba(82,214,255,.55);
+      box-shadow: 0 0 18px rgba(82,214,255,.16);
+    }
+    .nodeIconBtn.danger{ border-color: rgba(255,77,109,.35); }
+    .nodeIconBtn.danger:active{ background: rgba(255,77,109,.12); border-color: rgba(255,77,109,.55); }
+
+    /* Connection handle (bolinha) */
+    .connHandle{
+      position:absolute;
+      right:-9px;
+      top:50%;
+      transform: translateY(-50%);
+      width:16px;
+      height:16px;
+      border-radius:999px;
+      background: rgba(82,214,255,.90);
+      border: 2px solid rgba(0,0,0,.45);
+      box-shadow: 0 0 14px rgba(82,214,255,.55);
+      opacity:0;
+      pointer-events:none;
+    }
+    .node:hover .connHandle,
+    .node.selected .connHandle{
+      opacity:1;
+      pointer-events:auto;
+      cursor: crosshair;
+    }
+    /* When Alt is down, show handles on all nodes to make it obvious */
+    body.altDown .connHandle{
+      opacity:1 !important;
+      pointer-events:auto !important;
+    }
+
+    .palette{ display:none; } /* unchanged but kept minimal in v1.5 */
+
+    .areasWrap{
+      flex:1;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(6,14,33,.42);
+      box-shadow: var(--shadow);
+      overflow:auto;
+      padding: 12px;
+      min-height: 0;
+    }
+    .areasGrid{
+      display:grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .areaCard{
+      border: 1px solid rgba(80,180,255,.22);
+      background: linear-gradient(180deg, rgba(9,19,45,.62), rgba(6,14,33,.54));
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+    }
+    .areaTop{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .areaLogo{
+      width:42px; height:42px;
+      border-radius:14px;
+      border:1px solid rgba(82,214,255,.25);
+      background: rgba(0,0,0,.18);
+      display:grid; place-items:center;
+      overflow:hidden;
+      flex:0 0 auto;
+      cursor:pointer;
+    }
+    .areaLogo img{ width:100%; height:100%; object-fit:cover; }
+    .areaName{ font-weight:700; font-size:14px; line-height:1.2; word-break:break-word; flex:1; }
+    .areaTools{ display:flex; gap:8px; flex:0 0 auto; }
+
+    .addTaskRow{ display:flex; gap:8px; align-items:center; }
+    .addTaskRow input{
+      flex:1;
+      border:1px solid rgba(80,180,255,.20);
+      background: rgba(0,0,0,.22);
+      border-radius: 12px;
+      padding:10px 10px;
+      outline:none;
+    }
+    .taskList{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+    .task{
+      display:flex; gap:8px; align-items:flex-start;
+      padding:10px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(80,180,255,.18);
+      background: rgba(0,0,0,.18);
+    }
+    .task.done{
+      border-color: rgba(51,224,139,.28);
+      background: rgba(51,224,139,.08);
+    }
+    .taskText{ flex:1; font-size:13px; line-height:1.2; word-break:break-word; }
+    .taskBtns{ display:flex; gap:6px; flex:0 0 auto; }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + var(--safeBot));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.68);
+      border:1px solid rgba(82,214,255,.25);
+      padding: 10px 12px;
+      border-radius: 999px;
+      color: var(--text);
+      font-size: 12px;
+      box-shadow: var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+      z-index:999;
+    }
+    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-2px); }
+
+    @media (max-width: 520px){
+      .brand{ min-width: 0; }
+      .brand .title span{ display:none; }
+      .tabs .tab{ padding: 8px 10px; }
+      .hint{ display:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="frost"></div>
+  <div class="grid"></div>
+
+  <div class="app">
+    <div class="hud">
+      <div class="brand">
+        <img src="logo.png" alt="JixHunter logo" />
+        <div class="title">
+          <b>JixHunter</b>
+          <span>v1.5 • local • offline</span>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Abas">
+        <button class="tab active" id="tabTree" role="tab" aria-selected="true">
+          <span class="emoji">🌳</span> Jix-Tree
+        </button>
+        <button class="tab" id="tabAreas" role="tab" aria-selected="false">
+          <span class="emoji">🧩</span> Áreas
+        </button>
+      </div>
+
+      <div class="hudActions" aria-label="Ações rápidas">
+        <button class="iconBtn" id="btnTouchLink" title="No celular: toque origem → destinos (ligações múltiplas)">
+          🔗 <span class="hint">celular</span>
+        </button>
+        <button class="iconBtn" id="btnCenter" title="Reset visão">
+          🎯
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="treeWrap" id="treeView">
+        <div class="viewport" id="viewport">
+          <div class="world" id="world">
+            <svg class="edges" id="edgesSvg"></svg>
+          </div>
+        </div>
+
+        <div class="floatControls">
+          <button class="miniBtn" id="btnAddNode" title="Adicionar bloco">➕</button>
+          <button class="miniBtn" id="btnExport" title="Exportar JSON">⤓</button>
+          <button class="miniBtn" id="btnImport" title="Importar JSON">⤒</button>
+        </div>
+      </div>
+
+      <div class="areasWrap" id="areasView" style="display:none;">
+        <div class="areasGrid" id="areasGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <input type="file" id="filePicker" accept="application/json" style="display:none;" />
+  <input type="file" id="logoPicker" accept="image/*" style="display:none;" />
+
+  <script>
+    const LS_KEY = "jixhunter.v1_5.state";
+    const $ = (sel, el=document) => el.querySelector(sel);
+    const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+    const treeView = $("#treeView");
+    const areasView = $("#areasView");
+    const areasGrid = $("#areasGrid");
+
+    const viewport = $("#viewport");
+    const world = $("#world");
+    const edgesSvg = $("#edgesSvg");
+
+    const btnAddNode = $("#btnAddNode");
+    const btnExport = $("#btnExport");
+    const btnImport = $("#btnImport");
+    const filePicker = $("#filePicker");
+    const logoPicker = $("#logoPicker");
+
+    const btnTouchLink = $("#btnTouchLink");
+    const btnCenter = $("#btnCenter");
+
+    const toast = $("#toast");
+    const tabTree = $("#tabTree");
+    const tabAreas = $("#tabAreas");
+
+    const defaultState = () => ({
+      view: "tree",
+      transform: { x: 60, y: 60, scale: 1 },
+      zCounter: 1,
+      nodes: {},
+      edges: [],
+      areas: {}
+    });
+
+    let state = loadState();
+
+    let ui = {
+      activePointerId: null,
+
+      nodeDownId: null,
+      nodeDownPos: null,
+      nodeDownNodeXY: null,
+      dragging: false,
+      dragThreshold: 8,
+
+      panning: false,
+      panStart: null,
+      pinch: null,
+
+      altDown: false,
+
+      // mobile connect mode
+      touchLinkMode: false,
+      linkFrom: null,
+
+      // desktop link drag (Alt + drag from handle)
+      linkDrag: {
+        active: false,
+        from: null,
+        toHover: null,
+        pointerWorld: {x:0,y:0},
+        pathEl: null
+      },
+
+      // inline edit
+      inlineEditingId: null,
+
+      lastTap: { time:0, x:0, y:0 }
+    };
+
+    function uid(prefix="id"){
+      return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+    }
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+    function toastMsg(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=>toast.classList.remove("show"), 1400);
+    }
+    function saveState(){
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+    }
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return defaultState();
+        const parsed = JSON.parse(raw);
+        return Object.assign(defaultState(), parsed);
+      }catch(e){
+        return defaultState();
+      }
+    }
+
+    function applyTransform(){
+      const t = state.transform;
+      world.style.transform = `translate(${t.x}px, ${t.y}px) scale(${t.scale})`;
+    }
+
+    function screenToWorld(clientX, clientY){
+      const rect = viewport.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      const t = state.transform;
+      return { x: (x - t.x) / t.scale, y: (y - t.y) / t.scale };
+    }
+
+    function nodeCenter(node){
+      const el = document.getElementById(node.id);
+      if(!el) return { x: node.x + 80, y: node.y + 24 };
+      const r = el.getBoundingClientRect();
+      return screenToWorld(r.left + r.width/2, r.top + r.height/2);
+    }
+
+    function setView(view){
+      state.view = view;
+      if(view === "tree"){
+        treeView.style.display = "";
+        areasView.style.display = "none";
+        tabTree.classList.add("active"); tabTree.setAttribute("aria-selected","true");
+        tabAreas.classList.remove("active"); tabAreas.setAttribute("aria-selected","false");
+        renderAll();
+      }else{
+        treeView.style.display = "none";
+        areasView.style.display = "";
+        tabAreas.classList.add("active"); tabAreas.setAttribute("aria-selected","true");
+        tabTree.classList.remove("active"); tabTree.setAttribute("aria-selected","false");
+        renderAreas();
+      }
+      saveState();
+    }
+
+    function addNodeAt(wx, wy){
+      const id = uid("node");
+      state.nodes[id] = {
+        id,
+        x: Math.round(wx),
+        y: Math.round(wy),
+        name: "",
+        color: "#52d6ff",
+        selected: false,
+        isArea: false,
+        z: ++state.zCounter
+      };
+      saveState();
+      renderAll();
+      selectExclusive(id);
+      startInlineEdit(id);
+      toastMsg("Digite o nome…");
+    }
+
+    function selectExclusive(id){
+      Object.values(state.nodes).forEach(n=>n.selected=false);
+      if(state.nodes[id]) state.nodes[id].selected = true;
+      saveState();
+      renderAll();
+    }
+
+    function toggleSelected(id){
+      const n = state.nodes[id];
+      if(!n) return;
+      n.selected = !n.selected;
+      saveState();
+      renderAll();
+    }
+
+    function bringFront(id){
+      const n = state.nodes[id];
+      if(!n) return;
+      n.z = ++state.zCounter;
+      saveState();
+      renderAll();
+    }
+
+    function toggleArea(id){
+      const n = state.nodes[id];
+      if(!n) return;
+      n.isArea = !n.isArea;
+      if(n.isArea){
+        if(!state.areas[id]) state.areas[id] = { logoDataUrl:"", tasks:[] };
+        toastMsg("Marcado como área");
+      }else{
+        toastMsg("Removido de áreas");
+      }
+      saveState();
+      renderAll();
+      if(state.view === "areas") renderAreas();
+    }
+
+    function deleteNode(id){
+      if(!state.nodes[id]) return;
+      delete state.nodes[id];
+      state.edges = (state.edges || []).filter(e => e.from !== id && e.to !== id);
+      if(state.areas && state.areas[id]) delete state.areas[id];
+      saveState();
+      if(ui.inlineEditingId === id) ui.inlineEditingId = null;
+      renderAll();
+      if(state.view === "areas") renderAreas();
+      toastMsg("Bloco excluído");
+    }
+
+    function addEdge(from, to){
+      if(from === to) return;
+      state.edges = state.edges || [];
+      const exists = state.edges.some(e => e.from === from && e.to === to);
+      if(exists) return;
+      state.edges.push({ id: uid("edge"), from, to });
+      saveState();
+      renderAll();
+      toastMsg("Conectado");
+    }
+
+    function startInlineEdit(nodeId){
+      ui.inlineEditingId = nodeId;
+      renderAll();
+      const el = document.getElementById(nodeId);
+      const input = el?.querySelector(".nodeTitleEdit");
+      if(input){
+        setTimeout(()=>{ input.focus({preventScroll:true}); input.select?.(); }, 0);
+      }
+    }
+    function stopInlineEdit(save=true){
+      const id = ui.inlineEditingId;
+      if(!id) return;
+      const el = document.getElementById(id);
+      const input = el?.querySelector(".nodeTitleEdit");
+      if(save && input && state.nodes[id]){
+        state.nodes[id].name = input.value || "";
+        saveState();
+      }
+      ui.inlineEditingId = null;
+      renderAll();
+      if(state.view === "areas") renderAreas();
+    }
+
+    function renderAll(){
+      applyTransform();
+      renderNodes();
+      renderEdges();
+      renderTempLink();
+      btnTouchLink.classList.toggle("on", ui.touchLinkMode);
+    }
+
+    function renderNodes(){
+      const existing = new Set($$(".node", world).map(el => el.id));
+      Object.keys(state.nodes).forEach(id => existing.delete(id));
+      existing.forEach(id => document.getElementById(id)?.remove());
+
+      Object.values(state.nodes).forEach(n => {
+        let el = document.getElementById(n.id);
+        if(!el){
+          el = document.createElement("div");
+          el.className = "node";
+          el.id = n.id;
+          el.innerHTML = `
+            <div class="nodeHeader">
+              <div class="colorDot"></div>
+              <div class="nodeTitle"></div>
+
+              <div class="nodeIcons">
+                <button class="nodeIconBtn areaBtn" type="button" title="Marcar como área">🧩</button>
+                <button class="nodeIconBtn renameBtn" type="button" title="Renomear">✍️</button>
+                <button class="nodeIconBtn danger delBtn" type="button" title="Excluir">🗑️</button>
+              </div>
+
+              <div class="connHandle" title="Alt + arrastar para conectar"></div>
+            </div>
+          `;
+          world.appendChild(el);
+
+          $$(".nodeIconBtn", el).forEach(btn=>{
+            btn.addEventListener("pointerdown", (ev)=>{ ev.stopPropagation(); }, {passive:true});
+          });
+
+          $(".areaBtn", el).addEventListener("click", (ev)=>{
+            ev.stopPropagation();
+            toggleArea(n.id);
+          });
+
+          $(".renameBtn", el).addEventListener("click", (ev)=>{
+            ev.stopPropagation();
+            selectExclusive(n.id);
+            startInlineEdit(n.id);
+          });
+
+          $(".delBtn", el).addEventListener("click", (ev)=>{
+            ev.stopPropagation();
+            deleteNode(n.id);
+          });
+
+          // Connection handle: Alt + drag from here on desktop
+          const handle = $(".connHandle", el);
+          handle.addEventListener("pointerdown", (ev)=>{
+            if(!(ui.altDown && ev.pointerType === "mouse")) return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            stopInlineEdit(true);
+            ui.activePointerId = ev.pointerId;
+            startAltLinkDrag(n.id, ev.clientX, ev.clientY);
+            handle.setPointerCapture(ev.pointerId);
+            toastMsg("Arraste até o destino");
+          });
+
+          handle.addEventListener("pointermove", (ev)=>{
+            if(ui.linkDrag.active && ui.activePointerId === ev.pointerId){
+              ev.preventDefault();
+              updateAltLinkDrag(ev.clientX, ev.clientY);
+            }
+          });
+
+          handle.addEventListener("pointerup", (ev)=>{
+            if(ui.linkDrag.active && ui.activePointerId === ev.pointerId){
+              ui.activePointerId = null;
+              try { handle.releasePointerCapture(ev.pointerId); } catch(_) {}
+              finishAltLinkDrag(false);
+            }
+          });
+
+          handle.addEventListener("pointercancel", ()=>{
+            if(ui.linkDrag.active){
+              ui.activePointerId = null;
+              finishAltLinkDrag(true);
+            }
+          });
+
+          el.addEventListener("pointerdown", onNodePointerDown);
+          el.addEventListener("pointermove", onNodePointerMove);
+          el.addEventListener("pointerup", onNodePointerUp);
+          el.addEventListener("pointercancel", onNodePointerUp);
+        }
+
+        el.style.left = n.x + "px";
+        el.style.top  = n.y + "px";
+        el.style.zIndex = n.z || 1;
+
+        el.querySelector(".colorDot").style.background = n.color || "#52d6ff";
+
+        const titleHolder = el.querySelector(".nodeTitle");
+        if(ui.inlineEditingId === n.id){
+          titleHolder.innerHTML = "";
+          const input = document.createElement("input");
+          input.className = "nodeTitleEdit";
+          input.type = "text";
+          input.placeholder = "Digite o nome…";
+          input.value = n.name || "";
+          titleHolder.appendChild(input);
+
+          input.addEventListener("pointerdown", (ev)=> ev.stopPropagation());
+          input.addEventListener("keydown", (ev)=>{
+            if(ev.key === "Enter"){ ev.preventDefault(); stopInlineEdit(true); }
+            if(ev.key === "Escape"){ ev.preventDefault(); stopInlineEdit(false); }
+          });
+          input.addEventListener("blur", ()=> stopInlineEdit(true));
+        }else{
+          titleHolder.textContent = (n.name && n.name.trim()) ? n.name : " ";
+        }
+
+        el.classList.toggle("selected", !!n.selected);
+        el.classList.toggle("linkHover", ui.linkDrag.active && ui.linkDrag.toHover === n.id);
+        el.querySelector(".areaBtn").classList.toggle("on", !!n.isArea);
+      });
+    }
+
+    function renderEdges(){
+      edgesSvg.innerHTML = "";
+      const edges = state.edges || [];
+      edges.forEach(e => {
+        const a = state.nodes[e.from];
+        const b = state.nodes[e.to];
+        if(!a || !b) return;
+
+        const ca = nodeCenter(a);
+        const cb = nodeCenter(b);
+
+        const dx = Math.abs(cb.x - ca.x);
+        const c1x = ca.x + (cb.x > ca.x ? dx * 0.35 : -dx * 0.35);
+        const c2x = cb.x - (cb.x > ca.x ? dx * 0.35 : -dx * 0.35);
+
+        const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+        p.setAttribute("d", `M ${ca.x} ${ca.y} C ${c1x} ${ca.y}, ${c2x} ${cb.y}, ${cb.x} ${cb.y}`);
+        p.setAttribute("class", "edge");
+        edgesSvg.appendChild(p);
+      });
+    }
+
+    // --- Temp link line + robust hit-testing
+    function ensureTempPath(){
+      if(ui.linkDrag.pathEl && ui.linkDrag.pathEl.isConnected) return ui.linkDrag.pathEl;
+      const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+      p.setAttribute("class", "edgeTemp");
+      edgesSvg.appendChild(p);
+      ui.linkDrag.pathEl = p;
+      return p;
+    }
+    function clearTempPath(){
+      if(ui.linkDrag.pathEl && ui.linkDrag.pathEl.isConnected){
+        ui.linkDrag.pathEl.remove();
+      }
+      ui.linkDrag.pathEl = null;
+    }
+    function bezierPath(fromPt, toPt){
+      const dx = Math.abs(toPt.x - fromPt.x);
+      const c1x = fromPt.x + (toPt.x > fromPt.x ? dx * 0.35 : -dx * 0.35);
+      const c2x = toPt.x - (toPt.x > fromPt.x ? dx * 0.35 : -dx * 0.35);
+      return `M ${fromPt.x} ${fromPt.y} C ${c1x} ${fromPt.y}, ${c2x} ${toPt.y}, ${toPt.x} ${toPt.y}`;
+    }
+
+    function hitTestNodeId(clientX, clientY){
+      // Temporarily disable pointer events on the temp path so elementFromPoint finds nodes
+      if(ui.linkDrag.pathEl) ui.linkDrag.pathEl.style.pointerEvents = "none";
+      const el = document.elementFromPoint(clientX, clientY);
+      const nodeEl = el?.closest?.(".node");
+      return nodeEl ? nodeEl.id : null;
+    }
+
+    function renderTempLink(){
+      if(ui.linkDrag.active && ui.linkDrag.from){
+        const a = state.nodes[ui.linkDrag.from];
+        if(!a) { clearTempPath(); return; }
+        const fromPt = nodeCenter(a);
+
+        let toPt = ui.linkDrag.pointerWorld;
+        if(ui.linkDrag.toHover && state.nodes[ui.linkDrag.toHover]){
+          toPt = nodeCenter(state.nodes[ui.linkDrag.toHover]);
+        }
+
+        const p = ensureTempPath();
+        p.setAttribute("d", bezierPath(fromPt, toPt));
+        return;
+      }
+
+      if(ui.touchLinkMode && ui.linkFrom){
+        const a = state.nodes[ui.linkFrom];
+        if(!a) { clearTempPath(); return; }
+        const fromPt = nodeCenter(a);
+        const toPt = ui.linkDrag.pointerWorld;
+        const p = ensureTempPath();
+        p.setAttribute("d", bezierPath(fromPt, toPt));
+        return;
+      }
+
+      clearTempPath();
+    }
+
+    function startAltLinkDrag(fromNodeId, clientX, clientY){
+      ui.linkDrag.active = true;
+      ui.linkDrag.from = fromNodeId;
+      ui.linkDrag.toHover = null;
+      ui.linkDrag.pointerWorld = screenToWorld(clientX, clientY);
+      selectExclusive(fromNodeId);
+      renderAll();
+    }
+
+    function updateAltLinkDrag(clientX, clientY){
+      ui.linkDrag.pointerWorld = screenToWorld(clientX, clientY);
+
+      // Robust hover detection (works even with pointer capture)
+      const hoveredId = hitTestNodeId(clientX, clientY);
+      if(hoveredId && hoveredId !== ui.linkDrag.from){
+        ui.linkDrag.toHover = hoveredId;
+      }else{
+        ui.linkDrag.toHover = null;
+      }
+
+      renderAll();
+    }
+
+    function finishAltLinkDrag(cancel){
+      if(!cancel && ui.linkDrag.active && ui.linkDrag.from && ui.linkDrag.toHover && ui.linkDrag.toHover !== ui.linkDrag.from){
+        addEdge(ui.linkDrag.from, ui.linkDrag.toHover);
+      }else{
+        renderAll();
+      }
+      ui.linkDrag.active = false;
+      ui.linkDrag.from = null;
+      ui.linkDrag.toHover = null;
+      renderAll();
+    }
+
+    // Node movement/selection (connection is only via handle on desktop)
+    function onNodePointerDown(ev){
+      if(ev.pointerType === "mouse" && ev.button !== 0) return;
+
+      const nodeId = ev.currentTarget.id;
+
+      if(ui.inlineEditingId && ui.inlineEditingId !== nodeId) stopInlineEdit(true);
+
+      // Mobile connect mode
+      if(ui.touchLinkMode){
+        ev.preventDefault();
+        ev.stopPropagation();
+        stopInlineEdit(true);
+
+        if(!ui.linkFrom){
+          ui.linkFrom = nodeId;
+          selectExclusive(nodeId);
+          ui.linkDrag.pointerWorld = nodeCenter(state.nodes[nodeId]);
+          toastMsg("Toque nos destinos… (toque no mesmo bloco para parar)");
+          renderAll();
+          return;
+        }else{
+          if(ui.linkFrom === nodeId){
+            ui.linkFrom = null;
+            renderAll();
+            toastMsg("Conexão pronta");
+            return;
+          }
+          addEdge(ui.linkFrom, nodeId);
+          // keep origin to allow one-to-many quickly
+          toastMsg("Conectado (continue)");
+          renderAll();
+          return;
+        }
+      }
+
+      if(ev.target.closest && (ev.target.closest(".nodeIconBtn") || ev.target.closest(".connHandle") || ev.target.closest(".nodeTitleEdit"))){
+        return;
+      }
+
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      ui.activePointerId = ev.pointerId;
+      ui.nodeDownId = nodeId;
+      ui.dragging = false;
+
+      const w = screenToWorld(ev.clientX, ev.clientY);
+      ui.nodeDownPos = { x: w.x, y: w.y };
+      ui.nodeDownNodeXY = { x: state.nodes[nodeId].x, y: state.nodes[nodeId].y };
+
+      bringFront(nodeId);
+      ev.currentTarget.setPointerCapture(ev.pointerId);
+    }
+
+    function onNodePointerMove(ev){
+      if(ui.activePointerId !== ev.pointerId) return;
+      if(!ui.nodeDownId) return;
+
+      const nodeId = ui.nodeDownId;
+      const n = state.nodes[nodeId];
+      if(!n) return;
+
+      const w = screenToWorld(ev.clientX, ev.clientY);
+      const dx = w.x - ui.nodeDownPos.x;
+      const dy = w.y - ui.nodeDownPos.y;
+
+      if(!ui.dragging){
+        const dist = Math.hypot(dx, dy);
+        if(dist < ui.dragThreshold) return;
+        ui.dragging = true;
+        document.getElementById(nodeId)?.classList.add("dragging");
+      }
+
+      ev.preventDefault();
+
+      n.x = Math.round(ui.nodeDownNodeXY.x + dx);
+      n.y = Math.round(ui.nodeDownNodeXY.y + dy);
+
+      saveState();
+      renderAll();
+    }
+
+    function onNodePointerUp(ev){
+      if(ui.activePointerId !== ev.pointerId) return;
+
+      const nodeId = ui.nodeDownId;
+      ui.activePointerId = null;
+      ui.nodeDownId = null;
+
+      if(!nodeId || !state.nodes[nodeId]) return;
+
+      document.getElementById(nodeId)?.classList.remove("dragging");
+
+      if(ui.dragging){
+        ui.dragging = false;
+        toastMsg("Posição salva");
+        return;
+      }
+
+      toggleSelected(nodeId);
+    }
+
+    // Viewport interactions: pan, create node on double tap blank
+    viewport.addEventListener("pointerdown", (ev)=>{
+      if(ev.pointerType === "mouse" && ev.button !== 0) return;
+
+      const clickedNode = ev.target.closest && ev.target.closest(".node");
+      if(!clickedNode){
+        stopInlineEdit(true);
+
+        const now = Date.now();
+        const dt = now - ui.lastTap.time;
+        const dx = Math.abs(ev.clientX - ui.lastTap.x);
+        const dy = Math.abs(ev.clientY - ui.lastTap.y);
+
+        if(dt < 320 && dx < 18 && dy < 18){
+          const w = screenToWorld(ev.clientX, ev.clientY);
+          addNodeAt(w.x, w.y);
+          ui.lastTap.time = 0;
+          return;
+        }
+        ui.lastTap = { time: now, x: ev.clientX, y: ev.clientY };
+
+        ui.panning = true;
+        ui.panStart = { x: ev.clientX, y: ev.clientY, tx: state.transform.x, ty: state.transform.y };
+        viewport.setPointerCapture(ev.pointerId);
+      }
+    });
+
+    viewport.addEventListener("pointermove", (ev)=>{
+      if(ui.touchLinkMode && ui.linkFrom){
+        ui.linkDrag.pointerWorld = screenToWorld(ev.clientX, ev.clientY);
+        renderTempLink();
+        return;
+      }
+      if(!ui.panning) return;
+      ev.preventDefault();
+      const dx = ev.clientX - ui.panStart.x;
+      const dy = ev.clientY - ui.panStart.y;
+      state.transform.x = ui.panStart.tx + dx;
+      state.transform.y = ui.panStart.ty + dy;
+      saveState();
+      applyTransform();
+      renderTempLink();
+    });
+
+    viewport.addEventListener("pointerup", ()=>{ ui.panning = false; renderTempLink(); });
+    viewport.addEventListener("pointercancel", ()=>{ ui.panning = false; renderTempLink(); });
+
+    // pinch zoom (touch)
+    viewport.addEventListener("touchstart", (ev)=>{
+      if(ev.touches.length === 2){
+        ui.pinch = { startDist: dist(ev.touches[0], ev.touches[1]), startScale: state.transform.scale };
+      }
+    }, { passive:false });
+
+    viewport.addEventListener("touchmove", (ev)=>{
+      if(ui.pinch && ev.touches.length === 2){
+        ev.preventDefault();
+        const d = dist(ev.touches[0], ev.touches[1]);
+        const factor = d / ui.pinch.startDist;
+        state.transform.scale = clamp(ui.pinch.startScale * factor, 0.5, 2.2);
+        saveState();
+        applyTransform();
+        renderEdges();
+        renderTempLink();
+      }
+    }, { passive:false });
+
+    viewport.addEventListener("touchend", ()=>{ ui.pinch = null; });
+
+    function dist(t1, t2){
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    // wheel zoom (desktop)
+    viewport.addEventListener("wheel", (ev)=>{
+      ev.preventDefault();
+      const delta = -ev.deltaY;
+      const zoom = delta > 0 ? 1.08 : 0.92;
+
+      const mx = ev.clientX, my = ev.clientY;
+      const before = screenToWorld(mx, my);
+      state.transform.scale = clamp(state.transform.scale * zoom, 0.5, 2.2);
+      const after = screenToWorld(mx, my);
+
+      state.transform.x += (after.x - before.x) * state.transform.scale;
+      state.transform.y += (after.y - before.y) * state.transform.scale;
+
+      saveState();
+      applyTransform();
+      renderEdges();
+      renderTempLink();
+    }, { passive:false });
+
+    window.addEventListener("keydown", (e)=>{ if(e.key === "Alt") setAlt(true); });
+    window.addEventListener("keyup", (e)=>{ if(e.key === "Alt") setAlt(false); });
+
+    function setAlt(on){
+      ui.altDown = on;
+      document.body.classList.toggle("altDown", on);
+    }
+
+    // buttons
+    btnAddNode.addEventListener("click", ()=>{
+      const rect = viewport.getBoundingClientRect();
+      const w = screenToWorld(rect.left + rect.width/2, rect.top + rect.height/2);
+      addNodeAt(w.x, w.y);
+    });
+
+    btnExport.addEventListener("click", exportJSON);
+    btnImport.addEventListener("click", ()=> filePicker.click());
+
+    btnTouchLink.addEventListener("click", ()=>{
+      ui.touchLinkMode = !ui.touchLinkMode;
+      btnTouchLink.classList.toggle("on", ui.touchLinkMode);
+
+      if(!ui.touchLinkMode){
+        ui.linkFrom = null;
+        renderAll();
+        toastMsg("Conexão celular off");
+      }else{
+        ui.linkFrom = null;
+        toastMsg("Celular: toque origem → destinos");
+      }
+    });
+
+    btnCenter.addEventListener("click", centerView);
+
+    tabTree.addEventListener("click", ()=> setView("tree"));
+    tabAreas.addEventListener("click", ()=> setView("areas"));
+
+    function centerView(){
+      state.transform = { x: 60, y: 60, scale: 1 };
+      saveState();
+      stopInlineEdit(true);
+      renderAll();
+      toastMsg("Visão resetada");
+    }
+
+    function exportJSON(){
+      const data = JSON.stringify(state, null, 2);
+      const blob = new Blob([data], { type:"application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "jixhunter-export.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(data).then(()=>toastMsg("Exportado + copiado"));
+      }else{
+        toastMsg("Exportado");
+      }
+    }
+
+    filePicker.addEventListener("change", async ()=>{
+      const f = filePicker.files && filePicker.files[0];
+      filePicker.value = "";
+      if(!f) return;
+      try{
+        const txt = await f.text();
+        const incoming = JSON.parse(txt);
+        if(!incoming || typeof incoming !== "object") throw new Error("JSON inválido");
+        state = Object.assign(defaultState(), incoming);
+        saveState();
+        stopInlineEdit(false);
+        renderAll();
+        if(state.view === "areas") renderAreas();
+        toastMsg("Importado");
+      }catch(e){
+        toastMsg("Falha ao importar");
+      }
+    });
+
+    // Areas view (same as before, simplified)
+    function renderAreas(){
+      areasGrid.innerHTML = "";
+      const areaNodes = Object.values(state.nodes).filter(n => n.isArea);
+
+      if(areaNodes.length === 0){
+        areasGrid.innerHTML = `
+          <div class="areaCard" style="grid-column: 1 / -1; text-align:center;">
+            <div style="color: var(--muted); font-size: 13px; line-height: 1.4;">
+              Sem áreas ainda. <br/>
+              Volte na aba 🌳 e marque um bloco como área (🧩).
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      areaNodes.sort((a,b)=> (b.z||0)-(a.z||0)).forEach(n => {
+        if(!state.areas[n.id]) state.areas[n.id] = { logoDataUrl:"", tasks:[] };
+        const areaData = state.areas[n.id];
+
+        const card = document.createElement("div");
+        card.className = "areaCard";
+        card.innerHTML = `
+          <div class="areaTop">
+            <div class="areaLogo" id="logo_${n.id}">
+              ${areaData.logoDataUrl ? `<img src="${areaData.logoDataUrl}" alt="logo">` : `<span style="color:var(--muted); font-size:12px;">LOGO</span>`}
+            </div>
+            <div class="areaName">${escapeHtml((n.name && n.name.trim()) ? n.name : "Área")}</div>
+            <div class="areaTools">
+              <button class="nodeIconBtn" type="button" title="Remover área">🧩</button>
+            </div>
+          </div>
+
+          <div class="addTaskRow">
+            <input type="text" placeholder="Nova tarefa..." />
+            <button class="nodeIconBtn" type="button" title="Adicionar">➕</button>
+          </div>
+          <div class="taskList" id="tasks_${n.id}"></div>
+        `;
+        areasGrid.appendChild(card);
+
+        const logoBox = card.querySelector(`#logo_${CSS.escape(n.id)}`);
+        logoBox.addEventListener("click", ()=>{
+          logoPicker.dataset.areaId = n.id;
+          logoPicker.click();
+        });
+
+        const btnUnArea = card.querySelector(".areaTools .nodeIconBtn");
+        btnUnArea.addEventListener("click", ()=>{
+          toggleArea(n.id);
+          renderAreas();
+        });
+
+        const input = card.querySelector(".addTaskRow input");
+        const addBtn = card.querySelector(".addTaskRow .nodeIconBtn");
+
+        function addTask(){
+          const text = (input.value || "").trim();
+          if(!text) return;
+          areaData.tasks.push({ id: uid("task"), text, done:false });
+          input.value = "";
+          saveState();
+          renderAreas();
+        }
+        input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") addTask(); });
+        addBtn.addEventListener("click", addTask);
+
+        renderTaskList(n.id, card.querySelector(`#tasks_${CSS.escape(n.id)}`));
+      });
+    }
+
+    function renderTaskList(areaId, container){
+      const areaData = state.areas[areaId];
+      container.innerHTML = "";
+      (areaData.tasks || []).forEach(t => {
+        const row = document.createElement("div");
+        row.className = "task" + (t.done ? " done" : "");
+        row.innerHTML = `
+          <div class="taskText">${escapeHtml(t.text)}</div>
+          <div class="taskBtns">
+            <button class="nodeIconBtn" type="button" title="Concluir">${t.done ? "↩️" : "✅"}</button>
+            <button class="nodeIconBtn danger" type="button" title="Excluir">🗑️</button>
+          </div>
+        `;
+        container.appendChild(row);
+
+        row.querySelectorAll(".nodeIconBtn")[0].addEventListener("click", ()=>{
+          t.done = !t.done;
+          saveState();
+          renderAreas();
+        });
+        row.querySelectorAll(".nodeIconBtn")[1].addEventListener("click", ()=>{
+          areaData.tasks = areaData.tasks.filter(x => x.id !== t.id);
+          saveState();
+          renderAreas();
+        });
+      });
+    }
+
+    // Logo picker
+    logoPicker.addEventListener("change", async ()=>{
+      const f = logoPicker.files && logoPicker.files[0];
+      logoPicker.value = "";
+      const areaId = logoPicker.dataset.areaId;
+      if(!f || !areaId) return;
+      try{
+        const dataUrl = await fileToDataUrl(f);
+        if(!state.areas[areaId]) state.areas[areaId] = { logoDataUrl:"", tasks:[] };
+        state.areas[areaId].logoDataUrl = dataUrl;
+        saveState();
+        renderAreas();
+        toastMsg("Logo salva");
+      }catch(e){
+        toastMsg("Falha no logo");
+      }
+    });
+
+    function fileToDataUrl(file){
+      return new Promise((resolve,reject)=>{
+        const reader = new FileReader();
+        reader.onload = ()=> resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function escapeHtml(s){
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // init
+    setView(state.view || "tree");
+    renderAll();
+
+    if(Object.keys(state.nodes).length === 0){
+      const id = uid("node");
+      state.nodes[id] = { id, x: 420, y: 220, name:"Comece aqui", color:"#52d6ff", selected:true, isArea:false, z: ++state.zCounter };
+      saveState();
+      renderAll();
+    }
+
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape"){
+        stopInlineEdit(true);
+        if(ui.touchLinkMode){
+          ui.linkFrom = null;
+          renderAll();
+        }
+        if(ui.linkDrag.active){
+          finishAltLinkDrag(true);
+        }
+      }
+    });
+
+  </script>
+</body>
+</html>
